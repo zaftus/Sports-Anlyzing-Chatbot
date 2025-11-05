@@ -1,1 +1,101 @@
+# --------------------------------------------
+# Example Graphs for Sports Stat Analyzer
+# --------------------------------------------
+
+# Load required packages
+packages <- c("ggplot2", "dplyr", "scales")
+inst <- packages[!(packages %in% installed.packages()[, "Package"])]
+if(length(inst)) install.packages(inst, repos = "https://cloud.r-project.org")
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+# Create sample basketball dataset
+set.seed(42)
+n <- 200
+basketball <- tibble::tibble(
+  player = paste0("Player_", 1:n),
+  minutes = round(rnorm(n, 28, 6), 1),
+  points = round(pmax(0, rnorm(n, 12 + 0.4 * minutes, 8)), 1),
+  rebounds = round(pmax(0, rnorm(n, 4 + 0.1 * minutes, 3)), 1),
+  assists = round(pmax(0, rnorm(n, 3 + 0.05 * minutes, 2)), 1)
+)
+
+# --------------------------------------------
+# 1. Points vs. Minutes — Scatter Plot
+# --------------------------------------------
+p1 <- ggplot(basketball, aes(x = minutes, y = points, color = points)) +
+  geom_point(size = 3, alpha = 0.8) +
+  scale_color_gradient(low = "#2196F3", high = "#E91E63") +
+  labs(title = "Player Points vs. Minutes Played",
+       subtitle = "Basketball performance distribution (n=200 players)",
+       x = "Average Minutes per Game",
+       y = "Average Points per Game",
+       color = "Points") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", color = "#333333"),
+    plot.subtitle = element_text(color = "#555555"),
+    panel.grid.minor = element_blank()
+  )
+
+ggsave("figures/points_vs_minutes.png", p1, width = 8, height = 5, dpi = 300)
+
+# --------------------------------------------
+# 2. Distribution of Player Points — Histogram
+# --------------------------------------------
+p2 <- ggplot(basketball, aes(x = points)) +
+  geom_histogram(fill = "#4CAF50", color = "white", bins = 25, alpha = 0.9) +
+  labs(title = "Distribution of Points per Game",
+       subtitle = "Most players score between 10–20 points on average",
+       x = "Points per Game",
+       y = "Number of Players") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold", color = "#333333"))
+
+ggsave("figures/points_distribution.png", p2, width = 8, height = 5, dpi = 300)
+
+# --------------------------------------------
+# 3. Assists vs. Rebounds — Bubble Plot
+# --------------------------------------------
+p3 <- ggplot(basketball, aes(x = rebounds, y = assists, size = points, color = minutes)) +
+  geom_point(alpha = 0.8) +
+  scale_color_gradient(low = "#00BCD4", high = "#FF9800") +
+  scale_size(range = c(2, 8)) +
+  labs(title = "Relationship Between Rebounds, Assists, and Points",
+       subtitle = "Bubble size represents scoring; color represents playing time",
+       x = "Rebounds per Game",
+       y = "Assists per Game",
+       color = "Minutes",
+       size = "Points") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+ggsave("figures/rebounds_assists_bubble.png", p3, width = 8, height = 5, dpi = 300)
+
+# --------------------------------------------
+# 4. Correlation Heatmap — Numeric Variables
+# --------------------------------------------
+library(reshape2)
+corr_data <- round(cor(select(basketball, where(is.numeric))), 2)
+corr_melt <- melt(corr_data)
+
+p4 <- ggplot(corr_melt, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#E91E63", mid = "white", high = "#4CAF50", midpoint = 0.5) +
+  geom_text(aes(label = value), color = "black", size = 4) +
+  labs(title = "Correlation Heatmap — Player Performance Metrics",
+       x = "", y = "", fill = "Correlation") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("figures/correlation_heatmap.png", p4, width = 7, height = 6, dpi = 300)
+
+# --------------------------------------------
+# End of Script
+# --------------------------------------------
+cat("Saved example graphs to /figures folder. You can include them in your README or GitHub repo.\n")
 
